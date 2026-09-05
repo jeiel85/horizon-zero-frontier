@@ -110,15 +110,15 @@ export class Engine {
   }
 
   private spawnMachineFauna() {
-    // 3 Watchers in starting valley and ruins
-    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(25, 0, 30)));
-    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(-35, 0, 45)));
-    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(70, 0, 60)));
+    // 3 Watchers placed at safe distances (>45m) from the starting campfire
+    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(50, 0, 50)));
+    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(-60, 0, 65)));
+    this.machines.push(new Watcher(this.scene, this.terrain, new THREE.Vector3(85, 0, 75)));
 
     // 3 Striders in southern steppe
-    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-40, 0, 110)));
-    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-60, 0, 125)));
-    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-25, 0, 135)));
+    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-45, 0, 115)));
+    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-65, 0, 130)));
+    this.machines.push(new Strider(this.scene, this.terrain, new THREE.Vector3(-30, 0, 140)));
 
     // 2 Ravagers in the Sun-Carved Canyon
     this.machines.push(new Ravager(this.scene, this.terrain, new THREE.Vector3(140, 0, -100)));
@@ -129,6 +129,13 @@ export class Engine {
 
     // 1 Apex Boss: Thunderjaw in Cauldron SIGMA arena
     this.machines.push(new Thunderjaw(this.scene, this.terrain, new THREE.Vector3(-260, 0, -250)));
+
+    // Connect death callbacks directly to every machine
+    this.machines.forEach((m) => {
+      m.onKilledCallback = (killedMachine) => {
+        this.handleMachineKilled(killedMachine);
+      };
+    });
   }
 
   private setupEventHandlers() {
@@ -171,6 +178,13 @@ export class Engine {
     window.addEventListener('keydown', (e) => {
       // Audio init on first interaction
       soundManager.init();
+
+      if (this.player.isDead) {
+        if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE') {
+          this.respawnAtCampfire();
+          return;
+        }
+      }
 
       if (e.code === 'Digit1') this.bow.setAmmoType('impact');
       if (e.code === 'Digit2') this.bow.setAmmoType('fire');
@@ -303,7 +317,25 @@ export class Engine {
       }
     }
 
-    // 2. Override Machine with Spear
+    // 2. Search & Loot Dead Machine Wreckage
+    for (const m of this.machines) {
+      if (m.isDead && !m.isLooted && pPos.distanceTo(m.mesh.position) < 4.2) {
+        m.isLooted = true;
+        soundManager.playGather();
+        this.inventory.addResource('shard', 35);
+        this.inventory.addResource('wire', 5);
+
+        if (m instanceof Watcher) {
+          this.quests.reportEvent('recover_lens', this.player);
+          this.ui.showToast('★ 워처 잔해에서 [광학 렌즈 부품] 회수 완료!');
+        } else {
+          this.ui.showToast(`${m.name} 잔해에서 희귀 부품 획득! (+35 금속 파편)`);
+        }
+        return;
+      }
+    }
+
+    // 3. Override Machine with Spear
     const targetMachine = this.spear.checkOverrideOpportunity(this.player, this.machines);
     if (targetMachine) {
       this.spear.performOverride(this.player, targetMachine);
@@ -320,7 +352,7 @@ export class Engine {
       return;
     }
 
-    // 3. Cauldron Energy Shield Override
+    // 4. Cauldron Energy Shield Override
     if (pPos.distanceTo(this.cauldron.entrancePosition) < 14.0 && !this.cauldron.isShieldDown) {
       this.cauldron.disableEnergyShield();
       soundManager.playOverride();
@@ -333,9 +365,11 @@ export class Engine {
   private handleMachineKilled(machine: MachineBase) {
     this.inventory.addResource('shard', 25);
     this.inventory.addResource('wire', 4);
+    this.ui.showToast(`${machine.name} 토벌 완료! 잔해를 수색([F])하세요.`);
 
     if (machine instanceof Watcher) {
       this.quests.reportEvent('hunt_watcher', this.player);
+      this.quests.reportEvent('recover_lens', this.player);
     } else if (machine instanceof Ravager) {
       this.quests.reportEvent('defeat_ravager', this.player);
     } else if (machine instanceof Thunderjaw) {
@@ -351,7 +385,18 @@ export class Engine {
       this.mountedStrider.isBeingRidden = false;
       this.mountedStrider = null;
     }
-    this.ui.showToast('노라 야영지 모닥불에서 부활했습니다.');
+
+    // Reset nearby aggressive machines back to their spawn points
+    for (const m of this.machines) {
+      if (!m.isDead) {
+        const d = m.mesh.position.distanceTo(camp.position);
+        if (d < 70) {
+          m.resetToSpawn();
+        }
+      }
+    }
+
+    this.ui.showToast('노라 야영지 모닥불에서 부활했습니다. (4초간 무적)');
   }
 
   public start() {
@@ -473,6 +518,14 @@ export class Engine {
     for (const item of this.vegetation.gatherables) {
       if (!item.gathered && pPos.distanceTo(item.position) < 3.0) {
         this.ui.showPrompt('F', `${item.name} 채집`);
+        return;
+      }
+    }
+
+    // Check Dead Machine Wreckage
+    for (const m of this.machines) {
+      if (m.isDead && !m.isLooted && pPos.distanceTo(m.mesh.position) < 4.0) {
+        this.ui.showPrompt('F', `${m.name} 잔해 수색 (부품 회수)`);
         return;
       }
     }

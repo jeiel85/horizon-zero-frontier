@@ -25,6 +25,7 @@ export class Player {
   public isDead: boolean = false;
   public isAttackingMelee: boolean = false;
   public meleeTimer: number = 0;
+  public invulnerableTimer: number = 0;
 
   // Rig Joints for animation
   public head: THREE.Group;
@@ -302,10 +303,18 @@ export class Player {
       this.leftLeg.rotation.x = 0.4;
       this.rightLeg.rotation.x = 0.4;
     }
+
+    // Invulnerability timer countdown & blinking
+    if (this.invulnerableTimer > 0) {
+      this.invulnerableTimer -= delta;
+      this.mesh.visible = Math.floor(this.invulnerableTimer * 10) % 2 === 0;
+    } else {
+      this.mesh.visible = true;
+    }
   }
 
   public takeDamage(amount: number) {
-    if (this.isDead) return;
+    if (this.isDead || this.invulnerableTimer > 0) return;
     this.hp = Math.max(0, this.hp - amount);
     if (this.hp <= 0) {
       this.isDead = true;
@@ -321,6 +330,8 @@ export class Player {
     this.isDead = false;
     this.hp = this.maxHp;
     this.stamina = this.maxStamina;
+    this.invulnerableTimer = 4.0; // 4 seconds invulnerability on respawn
+    this.mesh.visible = true;
     this.mesh.position.copy(pos);
     this.mesh.rotation.set(0, 0, 0);
   }

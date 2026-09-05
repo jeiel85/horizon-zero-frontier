@@ -68,6 +68,7 @@ export class PlayerController {
     });
 
     domElement.addEventListener('mousedown', (e) => {
+      if (this.player.isDead) return;
       if (!this.isPointerLocked) {
         domElement.requestPointerLock();
       }
@@ -130,7 +131,12 @@ export class PlayerController {
   }
 
   public update(delta: number) {
-    if (this.player.isDead) return;
+    if (this.player.isDead) {
+      if (this.isPointerLocked) {
+        document.exitPointerLock();
+      }
+      return;
+    }
 
     // 1. Aiming state
     this.player.isAiming = this.isRightMouseDown;

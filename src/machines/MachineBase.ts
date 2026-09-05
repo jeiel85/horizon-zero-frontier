@@ -53,6 +53,8 @@ export abstract class MachineBase {
   public stunTimer: number = 0;
   public isOverridden: boolean = false;
   public isDead: boolean = false;
+  public isLooted: boolean = false;
+  public onKilledCallback?: (machine: MachineBase) => void;
 
   // Components / Body parts
   public components: MachineComponent[] = [];
@@ -284,5 +286,19 @@ export abstract class MachineBase {
     this.mesh.rotation.z = Math.PI / 2;
     this.mesh.position.y += 0.4;
     this.updateEyeColor(0x111111); // Eyes turn off
+
+    if (this.onKilledCallback) {
+      this.onKilledCallback(this);
+    }
+  }
+
+  public resetToSpawn() {
+    if (this.isDead) return;
+    this.mesh.position.copy(this.spawnPosition);
+    this.mesh.position.y = this.terrain.getTerrainHeight(this.spawnPosition.x, this.spawnPosition.z);
+    this.state = 'PATROL';
+    this.shockMeter = 0;
+    this.isStunned = false;
+    this.mesh.rotation.set(0, 0, 0);
   }
 }

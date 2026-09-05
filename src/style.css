@@ -721,10 +721,12 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
+  pointer-events: auto;
 }
 
 #title-screen.hidden, #pause-menu.hidden, #game-over-screen.hidden, #victory-screen.hidden {
-  display: none;
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .title-backdrop, .pause-backdrop {

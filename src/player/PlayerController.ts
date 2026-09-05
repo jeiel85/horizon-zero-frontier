@@ -35,11 +35,14 @@ export class PlayerController {
   private readonly JUMP_FORCE = 9.5;
   private readonly GRAVITY = -24.0;
 
-  // Input state
+  // Input state & Mouse settings
   public keys: { [key: string]: boolean } = {};
   public isRightMouseDown: boolean = false;
   public isLeftMouseDown: boolean = false;
   public isPointerLocked: boolean = false;
+  public mouseSensitivity: number = 0.0022;
+  public invertY: boolean = false;
+  public invertX: boolean = false;
 
   constructor(player: Player, camera: THREE.PerspectiveCamera, terrain: Terrain, domElement: HTMLElement) {
     this.player = player;
@@ -83,9 +86,12 @@ export class PlayerController {
 
     window.addEventListener('mousemove', (e) => {
       if (!this.isPointerLocked) return;
-      const sensitivity = 0.0022;
-      this.yaw -= e.movementX * sensitivity;
-      this.pitch -= e.movementY * sensitivity;
+      const factorX = this.invertX ? -1 : 1;
+      const factorY = this.invertY ? -1 : 1;
+
+      this.yaw -= e.movementX * this.mouseSensitivity * factorX;
+      // Standard non-inverted: Mouse up (movementY < 0) decreases camera height so camera looks upward
+      this.pitch += e.movementY * this.mouseSensitivity * factorY;
 
       // Clamp pitch to avoid camera flipping
       this.pitch = Math.max(-0.6, Math.min(1.1, this.pitch));

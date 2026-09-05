@@ -147,6 +147,26 @@ export class Engine {
       }
     );
 
+    // Mouse Controls Settings (Invert X / Y & Sensitivity)
+    const chkInvertY = document.getElementById('chk-invert-y') as HTMLInputElement;
+    const chkInvertX = document.getElementById('chk-invert-x') as HTMLInputElement;
+    const rngSensitivity = document.getElementById('rng-sensitivity') as HTMLInputElement;
+
+    chkInvertY?.addEventListener('change', () => {
+      this.controller.invertY = chkInvertY.checked;
+      this.ui.showToast(`마우스 Y축 반전: ${chkInvertY.checked ? 'ON' : 'OFF'}`);
+    });
+
+    chkInvertX?.addEventListener('change', () => {
+      this.controller.invertX = chkInvertX.checked;
+      this.ui.showToast(`마우스 X축 반전: ${chkInvertX.checked ? 'ON' : 'OFF'}`);
+    });
+
+    rngSensitivity?.addEventListener('input', () => {
+      const val = parseFloat(rngSensitivity.value);
+      this.controller.mouseSensitivity = 0.0022 * val;
+    });
+
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       // Audio init on first interaction

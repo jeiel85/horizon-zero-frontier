@@ -3,6 +3,7 @@ import { soundManager } from './audio/SoundManager';
 
 window.addEventListener('DOMContentLoaded', () => {
   const engine = new Engine();
+  (window as any).gameEngine = engine;
 
   const titleScreen = document.getElementById('title-screen')!;
   const btnStart = document.getElementById('btn-start-game')!;

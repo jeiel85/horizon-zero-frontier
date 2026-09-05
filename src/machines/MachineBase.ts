@@ -55,6 +55,7 @@ export abstract class MachineBase {
   public isDead: boolean = false;
   public isLooted: boolean = false;
   public onKilledCallback?: (machine: MachineBase) => void;
+  public onComponentTornCallback?: (componentName: string, machine: MachineBase) => void;
 
   // Components / Body parts
   public components: MachineComponent[] = [];
@@ -242,6 +243,9 @@ export abstract class MachineBase {
         comp.destroyed = true;
         comp.mesh.visible = false;
         soundManager.playComponentTearOff();
+        if (this.onComponentTornCallback) {
+          this.onComponentTornCallback(comp.name, this);
+        }
       }
     }
 

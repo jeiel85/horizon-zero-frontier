@@ -35,6 +35,7 @@ export class BowAndArrow {
 
   public currentAmmoType: AmmoType = 'impact';
   public chargeRatio: number = 0; // 0.0 to 1.0
+  public onCanisterExplodedCallback?: (machine: MachineBase) => void;
   private chargeSpeed: number = 1.4; // 100% charged in ~0.7s
 
   // Arrow 3D template
@@ -122,6 +123,9 @@ export class BowAndArrow {
 
           if (p.ammoType === 'fire' && hitResult.hitPartName === 'blaze_canister') {
             soundManager.playExplosion();
+            if (this.onCanisterExplodedCallback) {
+              this.onCanisterExplodedCallback(machine);
+            }
           }
 
           this.removeProjectile(i);

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>HORIZON: ZERO FRONTIER | 3D Open World Action RPG</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="game-container">
+    <!-- 3D WebGL Canvas will be injected here -->
+    
+    <!-- Focus Scan Mode Holographic Overlay -->
+    <div id="focus-overlay" class="hidden">
+      <div class="focus-grid"></div>
+      <div class="focus-vignette"></div>
+      <div class="focus-center-reticle">
+        <div class="focus-ring outer"></div>
+        <div class="focus-ring inner"></div>
+        <div class="focus-scan-data">FOCUS AR ONLINE // SCANNING BIOME</div>
+      </div>
+      <div id="focus-markers-container"></div>
+    </div>
+
+    <!-- Main Game HUD Layer -->
+    <div id="hud-layer">
+      <!-- Top Compass -->
+      <div id="compass-wrapper">
+        <div id="compass-tape">
+          <div class="compass-marker" style="left: 10%;">W</div>
+          <div class="compass-marker" style="left: 30%;">NW</div>
+          <div class="compass-marker center-cardinal" style="left: 50%;">N</div>
+          <div class="compass-marker" style="left: 70%;">NE</div>
+          <div class="compass-marker" style="left: 90%;">E</div>
+        </div>
+        <div id="compass-arrow">▼</div>
+        <div id="compass-poi-container"></div>
+      </div>
+
+      <!-- Top Left: Player Status -->
+      <div id="player-status-panel">
+        <div class="player-identity">
+          <span class="player-name">AYLA</span>
+          <span class="player-level" id="player-level-badge">LV. 1 NORA HUNTER</span>
+        </div>
+        <div class="bar-container hp-bar-wrapper">
+          <div class="bar-fill hp-fill" id="hp-bar" style="width: 100%;"></div>
+          <div class="bar-text" id="hp-text">100 / 100</div>
+        </div>
+        <div class="bar-container stamina-bar-wrapper">
+          <div class="bar-fill stamina-fill" id="stamina-bar" style="width: 100%;"></div>
+        </div>
+        <div class="status-items-row">
+          <div class="status-badge" id="herb-pouch-badge">
+            <span class="icon">🌿</span>
+            <span id="herb-count">3</span>
+            <span class="hotkey-tip">[Q] 치유</span>
+          </div>
+          <div class="status-badge" id="shards-badge">
+            <span class="icon">🔩</span>
+            <span id="shard-count">45</span>
+            <span class="label">금속 파편</span>
+          </div>
+          <div class="status-badge" id="focus-status-badge">
+            <span class="icon">👁️</span>
+            <span class="label">포커스 [V]</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stealth Indicator (Bottom Center / Mid Low) -->
+      <div id="stealth-indicator" class="stealth-hidden">
+        <div class="stealth-eye">
+          <div class="eye-lid top"></div>
+          <div class="eye-pupil"></div>
+          <div class="eye-lid bottom"></div>
+        </div>
+        <span class="stealth-text">은신 중</span>
+      </div>
+
+      <!-- Crosshair / Bow Aim Reticle -->
+      <div id="crosshair-container">
+        <div class="crosshair-dot"></div>
+        <div class="crosshair-arc left"></div>
+        <div class="crosshair-arc right"></div>
+        <div class="charge-meter" id="bow-charge-meter"></div>
+      </div>
+
+      <!-- Top Right: Quest Tracker -->
+      <div id="quest-tracker-panel">
+        <div class="quest-category" id="quest-category-tag">MAIN QUEST</div>
+        <div class="quest-title" id="quest-title-text">사냥꾼의 증표 (The Hunter's Path)</div>
+        <div class="quest-objective-list" id="quest-objective-list">
+          <div class="objective-item active">
+            <span class="checkbox">○</span>
+            <span class="text">포커스[V]로 주변의 워처(Watcher) 정찰 기계 탐색 (0/1)</span>
+          </div>
+        </div>
+        <div class="quest-distance" id="quest-distance-text">목표까지: 85m</div>
+      </div>
+
+      <!-- Bottom Right: Weapon & Ammo Wheel HUD -->
+      <div id="weapon-ammo-panel">
+        <div class="current-weapon-name" id="weapon-name-display">사냥꾼 활 (HUNTER BOW)</div>
+        <div class="ammo-selector-row">
+          <div class="ammo-slot active" data-ammo="impact" id="ammo-slot-1">
+            <div class="ammo-icon">🏹</div>
+            <div class="ammo-info">
+              <span class="ammo-name">충격 화살</span>
+              <span class="ammo-count" id="ammo-count-impact">18/30</span>
+            </div>
+            <div class="ammo-key">1</div>
+          </div>
+          <div class="ammo-slot" data-ammo="fire" id="ammo-slot-2">
+            <div class="ammo-icon">🔥</div>
+            <div class="ammo-info">
+              <span class="ammo-name">화염 화살</span>
+              <span class="ammo-count" id="ammo-count-fire">8/20</span>
+            </div>
+            <div class="ammo-key">2</div>
+          </div>
+          <div class="ammo-slot" data-ammo="shock" id="ammo-slot-3">
+            <div class="ammo-icon">⚡</div>
+            <div class="ammo-info">
+              <span class="ammo-name">전기 화살</span>
+              <span class="ammo-count" id="ammo-count-shock">5/15</span>
+            </div>
+            <div class="ammo-key">3</div>
+          </div>
+        </div>
+        <div class="craft-prompt-row">
+          <span>화살 즉시 제작: <strong>[R] 누르고 있기</strong> (자원 소모)</span>
+        </div>
+      </div>
+
+      <!-- Center Interaction Prompt -->
+      <div id="interaction-prompt" class="hidden">
+        <span class="key-badge" id="prompt-key">E</span>
+        <span class="prompt-text" id="prompt-label">상호작용</span>
+      </div>
+
+      <!-- Machine Target Lock-On / Weakpoint Info Box (Focus Scan & Combat) -->
+      <div id="target-info-box" class="hidden">
+        <div class="target-name" id="target-name">기계 생명체: 워처 (Watcher)</div>
+        <div class="target-hp-bar">
+          <div class="target-hp-fill" id="target-hp-fill" style="width: 100%;"></div>
+        </div>
+        <div class="target-weakpoints" id="target-weakpoints">
+          약점: <span class="highlight">렌즈 눈 (치명타)</span>, <span class="highlight">발광 캐니스터</span>
+        </div>
+      </div>
+
+      <!-- Subtitle / Cinematic Dialogue Box -->
+      <div id="dialogue-box" class="hidden">
+        <div class="dialogue-speaker" id="dialogue-speaker">AYLA</div>
+        <div class="dialogue-text" id="dialogue-text">...붉은 오염이 지상에 번지고 있어. 기계들이 점점 더 공격적으로 변하고 있다.</div>
+      </div>
+
+      <!-- Notification Toast -->
+      <div id="toast-container"></div>
+    </div>
+
+    <!-- Title / Start Screen Overlay -->
+    <div id="title-screen">
+      <div class="title-backdrop"></div>
+      <div class="title-content">
+        <div class="game-tag">AN EPIC 3D OPEN WORLD ACTION RPG</div>
+        <h1 class="game-title">HORIZON<br><span class="subtitle">ZERO FRONTIER</span></h1>
+        <p class="game-lore">
+          기계 야수들이 지배하는 원시와 고대 테크놀로지가 공존하는 대지.<br>
+          노라 부족의 이단아 사냥꾼 <strong>아일라(Ayla)</strong>가 되어 거대한 오픈월드를 탐험하고,<br>
+          기계의 약점을 사냥하여 지하 유적 <strong>가마솥 시그마(Cauldron SIGMA)</strong>의 비밀을 밝혀내세요.
+        </p>
+        <div class="title-buttons">
+          <button id="btn-start-game" class="btn-primary">신규 탐험 시작 (NEW GAME)</button>
+          <button id="btn-load-game" class="btn-secondary">여정 이어하기 (CONTINUE)</button>
+          <button id="btn-controls-guide" class="btn-tertiary">조작법 & 시스템 가이드</button>
+        </div>
+        <div class="credits-footer">
+          Powered by Three.js & TypeScript | Developed by jeiel85
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause / Campfire Menu Modal -->
+    <div id="pause-menu" class="hidden">
+      <div class="pause-backdrop"></div>
+      <div class="pause-card">
+        <div class="pause-header">
+          <h2 id="pause-menu-title">야영지 (CAMPFIRE) & 메뉴</h2>
+          <button id="btn-close-pause" class="btn-close">✕</button>
+        </div>
+        <div class="pause-tabs">
+          <button class="tab-btn active" data-tab="tab-save">세이브 / 로드</button>
+          <button class="tab-btn" data-tab="tab-quests">퀘스트 일지</button>
+          <button class="tab-btn" data-tab="tab-inventory">인벤토리</button>
+          <button class="tab-btn" data-tab="tab-controls">조작키 안내</button>
+        </div>
+        <div class="pause-body">
+          <!-- Save / Load Tab -->
+          <div class="tab-content active" id="tab-save">
+            <p class="section-desc">야영지의 모닥불에서 안전하게 현재 위치와 퀘스트 진행 상태를 영구 저장합니다.</p>
+            <div class="save-slots-list" id="save-slots-container">
+              <!-- Dynamically populated slots -->
+            </div>
+            <div class="save-actions">
+              <button id="btn-save-current" class="btn-primary">현재 상태 수동 저장 (SAVE)</button>
+              <button id="btn-fast-travel" class="btn-secondary">발견된 다른 캠프파이어로 빠른 이동</button>
+            </div>
+          </div>
+          <!-- Quests Tab -->
+          <div class="tab-content" id="tab-quests">
+            <div class="quest-log-split">
+              <div class="quest-log-list" id="quest-log-list"></div>
+              <div class="quest-log-details" id="quest-log-details"></div>
+            </div>
+          </div>
+          <!-- Inventory Tab -->
+          <div class="tab-content" id="tab-inventory">
+            <div class="inventory-grid" id="inventory-grid"></div>
+          </div>
+          <!-- Controls Tab -->
+          <div class="tab-content" id="tab-controls">
+            <table class="controls-table">
+              <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td>이동 (앞, 뒤, 좌, 우)</td></tr>
+              <tr><td><kbd>Shift</kbd> (길게)</td><td>전력 질주 (Sprint)</td></tr>
+              <tr><td><kbd>Space</kbd></td><td>점프 (Jump)</td></tr>
+              <tr><td><kbd>C</kbd> / <kbd>Ctrl</kbd></td><td>웅크리기 / 슬라이딩 (풀숲 은신)</td></tr>
+              <tr><td><kbd>Alt</kbd></td><td>회피 구르기 (Dodge Roll)</td></tr>
+              <tr><td>마우스 우클릭 (유지)</td><td>활 조준 (집중/슬로우 모션)</td></tr>
+              <tr><td>마우스 좌클릭</td><td>활 시위 당겨 발사 / 창 근접 공격</td></tr>
+              <tr><td><kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd></td><td>화살 탄종 변경 (충격 / 화염 / 전기)</td></tr>
+              <tr><td><kbd>R</kbd> (길게)</td><td>화살 즉석 제작 (Craft Ammo)</td></tr>
+              <tr><td><kbd>Q</kbd></td><td>치유 약초 섭취 (체력 회복)</td></tr>
+              <tr><td><kbd>V</kbd></td><td>포커스 스캔 모드 (Focus AR Vision)</td></tr>
+              <tr><td><kbd>E</kbd></td><td>상호작용 / 기계 탑승(Mount) / 캠프파이어 휴식</td></tr>
+              <tr><td><kbd>F</kbd></td><td>자원 채집 / 상자 열기 / 오버라이드 창 찌르기</td></tr>
+              <tr><td><kbd>M</kbd> / <kbd>ESC</kbd></td><td>캠프파이어 & 일시정지 메뉴</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="hidden">
+      <div class="game-over-content">
+        <h2 class="death-title">사냥꾼이 쓰러졌습니다</h2>
+        <p class="death-message">기계 생명체의 강력한 공격으로 의식을 잃었습니다.</p>
+        <div class="title-buttons">
+          <button id="btn-respawn-campfire" class="btn-primary">마지막 캠프파이어에서 부활</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="hidden">
+      <div class="victory-content">
+        <div class="victory-badge">CAULDRON SIGMA PURIFIED</div>
+        <h1 class="victory-title">새벽의 승리자</h1>
+        <p class="victory-message">
+          최종 거대 기계 '선더죠'를 격퇴하고 가마솥 시그마의 오염 코어를 정화했습니다!<br>
+          대지는 다시 균형을 찾기 시작했으며, 당신의 이름은 모든 부족의 전설이 되었습니다.
+        </p>
+        <div class="title-buttons">
+          <button id="btn-free-roam" class="btn-primary">자유 탐험 계속하기 (FREE ROAM)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

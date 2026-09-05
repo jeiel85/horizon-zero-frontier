@@ -1,0 +1,35 @@
+{
+  "name": "horizon-zero-frontier",
+  "version": "1.0.0",
+  "description": "An epic 3D Open World Action RPG inspired by Horizon Zero Dawn, powered by Three.js and TypeScript.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "keywords": [
+    "threejs",
+    "webgl",
+    "openworld",
+    "game",
+    "horizon-zero-dawn",
+    "rpg",
+    "3d",
+    "typescript",
+    "vite"
+  ],
+  "author": "jeiel85",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.1",
+    "gh-pages": "^6.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

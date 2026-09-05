@@ -130,12 +130,28 @@ export class Engine {
     // 1 Apex Boss: Thunderjaw in Cauldron SIGMA arena
     this.machines.push(new Thunderjaw(this.scene, this.terrain, new THREE.Vector3(-260, 0, -250)));
 
-    // Connect death callbacks directly to every machine
+    // Connect death and component tear-off callbacks to every machine
     this.machines.forEach((m) => {
       m.onKilledCallback = (killedMachine) => {
         this.handleMachineKilled(killedMachine);
       };
+
+      m.onComponentTornCallback = (compName) => {
+        if (compName === 'heavy_cannon') {
+          this.quests.reportEvent('tear_cannon', this.player);
+          this.ui.showToast('★ 래피저 [헤비 캐논] 부위 파괴 성공!');
+        } else if (compName === 'left_disc_launcher' || compName === 'right_disc_launcher') {
+          this.quests.reportEvent('tear_launchers', this.player);
+          this.ui.showToast(`★ 선더죠 [${compName === 'left_disc_launcher' ? '좌측' : '우측'} 디스크 런처] 부위 파괴!`);
+        }
+      };
     });
+
+    // Bow canister explosion callback
+    this.bow.onCanisterExplodedCallback = () => {
+      this.quests.reportEvent('detonate_canister', this.player);
+      this.ui.showToast('★ 스트라이더 [블레이즈 캐니스터] 유폭 성공!');
+    };
   }
 
   private setupEventHandlers() {
@@ -461,6 +477,22 @@ export class Engine {
 
       // 7. Interaction Prompts check
       this.updateInteractionPrompts();
+
+      // 7.5 Check exploration checkpoint objectives
+      const pPos = this.player.mesh.position;
+      // Reach Sun-Carved Canyon (130, -90)
+      if (Math.hypot(pPos.x - 130, pPos.z - (-90)) < 45) {
+        this.quests.reportEvent('reach_canyon', this.player);
+      }
+      // Climb Tallneck (-40, 200)
+      for (const m of this.machines) {
+        if (m instanceof Tallneck && !m.isDead) {
+          const dist2D = Math.hypot(pPos.x - m.mesh.position.x, pPos.z - m.mesh.position.z);
+          if (dist2D < 14 && pPos.y > m.mesh.position.y + 7) {
+            this.quests.reportEvent('climb_tallneck', this.player);
+          }
+        }
+      }
 
       // 8. Ammo quick-craft hold logic (Key R)
       if (this.controller.keys['KeyR']) {

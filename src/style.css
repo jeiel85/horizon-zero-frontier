@@ -848,6 +848,21 @@ button {
   letter-spacing: 1px;
 }
 
+.credits-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.credits-github:hover,
+.credits-github:focus-visible {
+  color: var(--color-focus-cyan);
+}
+
 /* --- Pause & Campfire Card --- */
 .pause-card {
   position: relative;

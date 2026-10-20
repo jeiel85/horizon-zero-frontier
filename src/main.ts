@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { Engine } from './core/Engine';
 import { soundManager } from './audio/SoundManager';
 
@@ -50,3 +51,11 @@ window.addEventListener('DOMContentLoaded', () => {
     controlsTabBtn?.click();
   });
 });
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((error) => {
+      console.warn('Service worker registration failed:', error);
+    });
+  });
+}
